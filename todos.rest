@@ -1,0 +1,136 @@
+
+### Test the Express server
+GET http://localhost:3000/
+
+### Create a Todo item
+POST http://localhost:3000/todos
+Content-Type: application/json
+
+{
+    "title": "Write API documentation",
+    "description": "OpenAPI and README examples",
+    "state": "todo"
+}
+
+### Create a second Todo
+POST http://localhost:3000/todos
+Content-Type: application/json
+
+{
+    "title": "Complete Express assignment",
+    "description": "Implement CRUD endpoints",
+    "state": "doing",
+    "dueDate": "2026-11-20"
+}
+
+
+### Get all Todo items
+GET http://localhost:3000/todos
+
+
+### Get all Todos
+GET http://localhost:3000/todos
+
+### Get Todos with state = todo
+GET http://localhost:3000/todos?state=todo
+
+### Get Todos with state = doing
+GET http://localhost:3000/todos?state=doing
+
+### Get Todos with state = done
+GET http://localhost:3000/todos?state=done
+
+
+### Create a Todo and save its response
+# @name createTodo
+POST http://localhost:3000/todos
+Content-Type: application/json
+
+{
+    "title": "Learn Express",
+    "description": "Practice REST API endpoints",
+    "state": "doing"
+}
+
+
+### Retrieve the Todo created above
+GET http://localhost:3000/todos/{{createTodo.response.body.$.id}}
+
+
+
+### Create a Todo for updating
+# @name createTodo
+POST http://localhost:3000/todos
+Content-Type: application/json
+
+{
+    "title": "Study REST APIs",
+    "description": "Learn Express and Node.js",
+    "state": "todo"
+}
+
+
+### Update Todo state from todo to doing
+PUT http://localhost:3000/todos/{{createTodo.response.body.$.id}}
+Content-Type: application/json
+
+{
+    "state": "doing"
+}
+
+
+### Update multiple Todo fields
+PUT http://localhost:3000/todos/{{createTodo.response.body.$.id}}
+Content-Type: application/json
+
+{
+    "title": "Complete REST API assignment",
+    "description": "Finish all CRUD endpoints",
+    "state": "done",
+    "dueDate": "2026-11-20"
+}
+
+### Verify the updated Todo
+GET http://localhost:3000/todos/{{createTodo.response.body.$.id}}
+
+### Attempt to update a nonexistent Todo
+PUT http://localhost:3000/todos/999
+Content-Type: application/json
+
+{
+    "state": "done"
+}
+
+
+### Create a Todo for deletion
+# @name createDeleteTodo
+POST http://localhost:3000/todos
+Content-Type: application/json
+
+{
+    "title": "Temporary Todo",
+    "description": "This item will be deleted",
+    "state": "todo"
+}
+
+
+### Test 400 Bad Request - Malformed JSON
+POST http://localhost:3000/todos
+Content-Type: application/json
+
+{
+    "title": "Study REST APIs",
+    "state": "todo",
+}
+
+
+### Delete the Todo created above
+DELETE http://localhost:3000/todos/{{createDeleteTodo.response.body.$.id}}
+
+
+### Verify that the deleted Todo no longer exists
+GET http://localhost:3000/todos/{{createDeleteTodo.response.body.$.id}}
+
+
+### Attempt to delete a nonexistent Todo
+DELETE http://localhost:3000/todos/999
