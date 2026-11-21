@@ -463,11 +463,8 @@ All 44 automated tests were executed successfully using the `npm test` command.
 | **Total**         | **44** | **44** |  **0** |
 
 **Test pass rate:** 100%
-
 **Total execution time:** Approximately 275.08 milliseconds
-
 **Skipped tests:** 0
-
 **Cancelled tests:** 0
 
 Terminal output:
@@ -482,6 +479,22 @@ skipped 0
 todo 0
 duration_ms 275.0807
 ```
+
+### Unit Testing Results
+
+A total of 24 unit tests were executed successfully, covering validation, Todo creation, retrieval, updating, deleting, and service independence.
+
+**Results: 24 passed, 0 failed.**
+
+![Unit Test Results](docs/unit-test-results.png)
+
+### Integration Testing Results
+
+A total of 20 integration tests were executed successfully using Supertest. The tests verified CRUD endpoints, HTTP status codes, response data, validation errors, and nonexistent resources.
+
+**Results: 20 passed, 0 failed.**
+
+![Integration Test Results](docs/integration-test-results.png)
 
 These results confirm that all implemented test cases passed, including successful CRUD operations, input validation, error handling, and test data isolation.
 
