@@ -8,7 +8,7 @@ const createApp = require("../src/app");
 // 1. ROOT ENDPOINT
 // ========================================
 
-test("GET / returns server status", async () => {
+test("GET / returns 200 server status", async () => {
   const app = createApp();
 
   const res = await request(app).get("/");
@@ -21,7 +21,7 @@ test("GET / returns server status", async () => {
 // 2. POST /todos - CREATE
 // ========================================
 
-test("POST /todos creates a Todo", async () => {
+test("POST /todos creates a Todo, returns 201", async () => {
   const app = createApp();
 
   const res = await request(app).post("/todos").send({
@@ -44,7 +44,7 @@ test("POST /todos creates a Todo", async () => {
   assert.equal(res.headers.location, `/todos/${res.body.id}`);
 });
 
-test("POST uses default values", async () => {
+test("POST uses default values, returns 201", async () => {
   const app = createApp();
 
   const res = await request(app).post("/todos").send({
@@ -57,7 +57,7 @@ test("POST uses default values", async () => {
   assert.equal(res.body.dueDate, null);
 });
 
-test("POST rejects a missing title", async () => {
+test("POST rejects a missing title, returns 400", async () => {
   const app = createApp();
 
   const res = await request(app).post("/todos").send({
@@ -68,7 +68,7 @@ test("POST rejects a missing title", async () => {
   assert.equal(res.body.error, "Title is required");
 });
 
-test("POST rejects an invalid state", async () => {
+test("POST rejects an invalid state, returns 400", async () => {
   const app = createApp();
 
   const res = await request(app).post("/todos").send({
@@ -80,7 +80,7 @@ test("POST rejects an invalid state", async () => {
   assert.equal(res.body.error, "Invalid state");
 });
 
-test("POST rejects a non-string title", async () => {
+test("POST rejects a non-string title, returns 400", async () => {
   const app = createApp();
 
   const res = await request(app).post("/todos").send({
@@ -91,7 +91,7 @@ test("POST rejects a non-string title", async () => {
   assert.equal(res.body.error, "Title must be a non-empty string");
 });
 
-test("POST rejects malformed JSON", async () => {
+test("POST rejects malformed JSON, returns 400", async () => {
   const app = createApp();
 
   const res = await request(app)
@@ -107,7 +107,7 @@ test("POST rejects malformed JSON", async () => {
 // 3. GET /todos - READ ALL
 // ========================================
 
-test("GET /todos returns an empty array", async () => {
+test("GET /todos returns an empty array, returns 200", async () => {
   const app = createApp();
 
   const res = await request(app).get("/todos");
@@ -116,7 +116,7 @@ test("GET /todos returns an empty array", async () => {
   assert.deepEqual(res.body, []);
 });
 
-test("GET /todos returns all created Todos", async () => {
+test("GET /todos returns all created Todos, returns 200", async () => {
   const app = createApp();
 
   await request(app).post("/todos").send({ title: "Task A" });
@@ -131,7 +131,7 @@ test("GET /todos returns all created Todos", async () => {
   assert.equal(res.body[1].title, "Task B");
 });
 
-test("GET /todos filters by state", async () => {
+test("GET /todos filters by state, returns 200", async () => {
   const app = createApp();
 
   await request(app).post("/todos").send({ title: "Task A", state: "todo" });
@@ -146,7 +146,7 @@ test("GET /todos filters by state", async () => {
   assert.equal(res.body[0].state, "doing");
 });
 
-test("GET /todos rejects invalid state filter", async () => {
+test("GET /todos rejects invalid state filter, returns 400", async () => {
   const app = createApp();
 
   const res = await request(app).get("/todos?state=pending");
@@ -159,7 +159,7 @@ test("GET /todos rejects invalid state filter", async () => {
 // 4. GET /todos/:id - READ ONE
 // ========================================
 
-test("GET /todos/:id returns matching Todo", async () => {
+test("GET /todos/:id returns matching Todo, returns 200", async () => {
   const app = createApp();
 
   const created = await request(app)
@@ -186,7 +186,7 @@ test("GET /todos/:id returns 404 for missing ID", async () => {
 // 5. PUT /todos/:id - UPDATE
 // ========================================
 
-test("PUT updates Todo state", async () => {
+test("PUT updates Todo state, returns 200", async () => {
   const app = createApp();
 
   const created = await request(app).post("/todos").send({
@@ -212,7 +212,7 @@ test("PUT updates Todo state", async () => {
   assert.equal(verified.body.state, "doing");
 });
 
-test("PUT updates multiple Todo fields", async () => {
+test("PUT updates multiple Todo fields, returns 200", async () => {
   const app = createApp();
 
   const created = await request(app)
@@ -232,7 +232,7 @@ test("PUT updates multiple Todo fields", async () => {
   assert.ok(res.body.updatedAt);
 });
 
-test("PUT rejects an invalid state", async () => {
+test("PUT rejects an invalid state, returns 400", async () => {
   const app = createApp();
 
   const created = await request(app)
@@ -267,7 +267,7 @@ test("PUT returns 404 for missing Todo", async () => {
 // 6. DELETE /todos/:id - DELETE
 // ========================================
 
-test("DELETE removes an existing Todo", async () => {
+test("DELETE successfully removes a Todo and verifies its absence (204/404)", async () => {
   const app = createApp();
 
   const created = await request(app)
