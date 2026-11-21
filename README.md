@@ -297,7 +297,6 @@ https://github.com/Karelia-Software-Projects/restapi_assignment.git
 **Technology:** Node.js, Express.js, JavaScript
 
 Version": 1.1.0 Change Log
-#-------------------------
 
 # Assignment 5: Unit Testing and Integration Testing
 
