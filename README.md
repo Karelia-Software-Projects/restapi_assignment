@@ -520,7 +520,6 @@ Overall, this assignment improved my understanding of software testing, modular 
 
 The application could be further improved by:
 
-- Increasing code coverage through additional boundary-value and edge-case tests.
 - Implementing persistent data storage using a database.
 - Introducing automated testing through GitHub Actions.
 - Implementing authentication and authorization.
