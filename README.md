@@ -20,7 +20,7 @@ The application uses a JavaScript array as temporary data storage instead of a d
 - **REST Client Extension:** Used to test HTTP requests and API responses.
 - **Git and GitHub:** Version control and source code repository.
 
-## 3. Project Structure
+## 3. Assignment 4 - Project Structure (Before refactoring)
 
 ```text
 restapi_assignment/
@@ -32,6 +32,8 @@ restapi_assignment/
 ├── .gitignore
 └── README.md
 ```
+
+Note: This structure represents the initial implementation completed in Assignment 4. The application was subsequently refactored in Assignment 5. See the Refactored Project Structure section below in assignment 5 section.
 
 **File descriptions:**
 
@@ -74,13 +76,11 @@ npm install
 **Step 4:** Start the server.
 
 ```bash
-node server.js
+node server.js --> Before refactor
+npm start --> After refactor - start script is configured in `package.json`.
 ```
 
-Alternatively, use `npm start` if the start script is configured in `package.json`.
-
 The server runs at:
-
 `http://localhost:3000`
 
 ## 5. Todo Data Model
@@ -296,7 +296,7 @@ https://github.com/Karelia-Software-Projects/restapi_assignment.git
 **Institution:** Karelia University of Applied Sciences  
 **Technology:** Node.js, Express.js, JavaScript
 
-#-------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
 
 Version: 1.1.0 Change Log
 
@@ -322,6 +322,36 @@ This presented several limitations:
 - Shared Todo data could affect the independence of automated tests.
 
 ### Refactoring Improvements
+
+## New Project Structure
+
+restapi_assignment/
+│
+├── src/
+│ ├── routes/
+│ │ └── todo.js
+│ │
+│ ├── services/
+│ │ └── todoService.js
+│ │
+│ ├── app.js
+│ └── server.js
+│
+├── tests/
+│ ├── todo.unit.test.js
+│ └── todo.integration.test.js
+│
+├── docs/
+│ ├── unit-test-results.png
+│ └── integration-test-results.png
+│
+├── todos.rest
+├── erros.rest
+├── git_link.txt
+├── package.json
+├── package-lock.json
+├── .gitignore
+└── README.md
 
 To address these limitations, the application was divided into separate modules.
 
