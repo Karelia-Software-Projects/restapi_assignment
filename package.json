@@ -11,7 +11,7 @@
     "test:coverage": "node --test --experimental-test-coverage"
   },
   "keywords": [],
-  "author": "",
+  "author": "Roshan De Alwis",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
