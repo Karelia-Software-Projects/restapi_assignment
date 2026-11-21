@@ -295,3 +295,227 @@ https://github.com/Karelia-Software-Projects/restapi_assignment.git
 **Course:** Software Engineering / REST API Assignment  
 **Institution:** Karelia University of Applied Sciences  
 **Technology:** Node.js, Express.js, JavaScript
+
+Version": 1.1.0 Change Log
+#-------------------------
+
+# Assignment 5: Unit Testing and Integration Testing
+
+## 1. Assignment Overview
+
+The objective of this assignment was to continue developing the Todo REST API implemented in Assignment 4 by improving its testability and introducing automated unit and integration tests.
+
+The existing application's CRUD functionality was preserved while its internal structure was refactored to separate application logic, API routes, Express configuration, and server startup.
+
+## 2. Refactoring and Testability
+
+### Limitations of the Original Implementation
+
+The original application contained all API endpoints, data operations, validation logic, and server startup code in a single `server.js` file.
+
+This presented several limitations:
+
+- Individual functions could not easily be tested independently.
+- Application logic was tightly coupled with HTTP request handlers.
+- Importing the server module would immediately start the HTTP server.
+- Shared Todo data could affect the independence of automated tests.
+
+### Refactoring Improvements
+
+To address these limitations, the application was divided into separate modules.
+
+| Module                           | Responsibility                                     |
+| -------------------------------- | -------------------------------------------------- |
+| `src/server.js`                  | Starts the HTTP server                             |
+| `src/app.js`                     | Configures Express, middleware, and routes         |
+| `src/routes/todo.js`             | Handles HTTP requests and responses                |
+| `src/services/todoService.js`    | Manages Todo data, validation, and CRUD operations |
+| `tests/todo.unit.test.js`        | Contains automated unit tests                      |
+| `tests/todo.integration.test.js` | Contains automated API integration tests           |
+
+The `createTodoService()` function creates an independent service instance with its own in-memory Todo array.
+
+Similarly, the `createApp()` function creates a separate Express application instance. This allows integration tests to run independently without manually starting the HTTP server.
+
+Dependency injection was used to pass the Todo service into the Express router, reducing dependencies between modules and improving testability.
+
+## 3. Application Architecture
+
+The refactored application follows a modular structure:
+
+```text
+HTTP Client / Supertest
+         |
+         v
+      app.js
+         |
+         v
+   routes/todo.js
+         |
+         v
+services/todoService.js
+         |
+         v
+   In-memory Array
+```
+
+The route layer handles HTTP communication, while the service layer is responsible for application logic and data operations.
+
+## 4. Testing Tools
+
+The following tools were used to implement automated testing:
+
+- **Node.js Test Runner (`node:test`):** Defines and executes automated test cases.
+- **Node.js Assert Module (`node:assert/strict`):** Compares actual results with expected results.
+- **Supertest:** Sends HTTP requests to the Express application and verifies API responses.
+- **VS Code REST Client:** Used for manual testing of REST API endpoints.
+
+## 5. Unit Testing
+
+Unit tests were implemented to verify individual functions in the Todo service without requiring Express or HTTP requests.
+
+A total of 24 unit tests were implemented.
+
+### Unit Test Coverage
+
+| Function              | Tested Scenarios                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `validateTodo()`      | Valid input, missing title, empty title, invalid state, invalid description, invalid date, and unknown fields |
+| `createTodo()`        | Default values, UUID generation, timestamps, and data storage                                                 |
+| `getAllTodos()`       | Empty array, retrieving all items, and state filtering                                                        |
+| `getTodoById()`       | Existing and nonexistent Todo IDs                                                                             |
+| `updateTodo()`        | Successful updates and nonexistent Todo IDs                                                                   |
+| `deleteTodo()`        | Successful deletion and nonexistent Todo IDs                                                                  |
+| `createTodoService()` | Independent service instances                                                                                 |
+
+Each unit test creates a new Todo service instance to ensure that test data does not interfere with other test cases.
+
+## 6. Integration Testing
+
+Integration tests were implemented using Supertest to verify that the API routes, validation logic, service functions, and HTTP responses work together correctly.
+
+A total of 20 integration tests were implemented.
+
+### Integration Test Coverage
+
+| Endpoint          | Tested Scenarios                                                     | Expected Status |
+| ----------------- | -------------------------------------------------------------------- | --------------- |
+| GET /             | Server status                                                        | 200             |
+| POST /todos       | Successful creation and default values                               | 201             |
+| POST /todos       | Missing title, invalid state, invalid title type, and malformed JSON | 400             |
+| GET /todos        | Empty list, retrieving all Todos, and state filtering                | 200             |
+| GET /todos        | Invalid state filter                                                 | 400             |
+| GET /todos/:id    | Retrieving an existing Todo                                          | 200             |
+| GET /todos/:id    | Nonexistent Todo                                                     | 404             |
+| PUT /todos/:id    | Successful state and property updates                                | 200             |
+| PUT /todos/:id    | Invalid state                                                        | 400             |
+| PUT /todos/:id    | Nonexistent Todo                                                     | 404             |
+| DELETE /todos/:id | Successful deletion                                                  | 204             |
+| DELETE /todos/:id | Nonexistent Todo                                                     | 404             |
+
+The integration tests also verify response data, generated IDs, timestamps, the Location response header, and independent application instances.
+
+Follow-up GET requests were used to confirm that successful updates and deletions were correctly reflected in the stored data.
+
+## 7. Executing Automated Tests
+
+Install the project dependencies:
+
+```bash
+npm install
+```
+
+Run all automated tests:
+
+```bash
+npm test
+```
+
+Run unit tests separately:
+
+```bash
+node --test tests/todo.unit.test.js
+```
+
+Run integration tests separately:
+
+```bash
+node --test tests/todo.integration.test.js
+```
+
+Generate a code coverage report:
+
+```bash
+node --test --experimental-test-coverage
+```
+
+Supertest allows integration tests to execute without manually starting the Express server.
+
+## 8. Test Results
+
+All 44 automated tests were executed successfully using the `npm test` command.
+
+| Test Category     |  Total | Passed | Failed |
+| ----------------- | -----: | -----: | -----: |
+| Unit Tests        |     24 |     24 |      0 |
+| Integration Tests |     20 |     20 |      0 |
+| **Total**         | **44** | **44** |  **0** |
+
+**Test pass rate:** 100%
+
+**Total execution time:** Approximately 275.08 milliseconds
+
+**Skipped tests:** 0
+
+**Cancelled tests:** 0
+
+Terminal output:
+
+```text
+tests 44
+suites 0
+pass 44
+fail 0
+cancelled 0
+skipped 0
+todo 0
+duration_ms 275.0807
+```
+
+These results confirm that all implemented test cases passed, including successful CRUD operations, input validation, error handling, and test data isolation.
+
+## 9. Personal Reflection
+
+Through this assignment, I gained a better understanding of the importance of writing testable code and separating different responsibilities within a software application.
+
+In Assignment 4, I implemented the REST API endpoints and application logic within a single JavaScript file. Although the application was functional, I realised that this structure made it difficult to test individual operations independently.
+
+Refactoring the application into separate route and service modules helped me understand how a modular application structure improves maintainability and testability.
+
+Unit testing helped me verify the behaviour of individual JavaScript functions, while integration testing allowed me to examine how the different application components interact through HTTP requests.
+
+Previously, I used the REST Client extension and Postman to test API endpoints manually. With automated testing, I can now execute multiple test cases using a single command and immediately identify unexpected behaviour.
+
+I also learned the importance of testing unsuccessful operations, such as invalid input, malformed JSON, and requests for nonexistent resources, rather than focusing only on successful scenarios.
+
+Another valuable learning experience was understanding how independent service and application instances prevent test cases from affecting one another.
+
+Overall, this assignment improved my understanding of software testing, modular application design, and backend development using Node.js and Express.
+
+## 10. Future Improvements
+
+The application could be further improved by:
+
+- Increasing code coverage through additional boundary-value and edge-case tests.
+- Implementing persistent data storage using a database.
+- Introducing automated testing through GitHub Actions.
+- Implementing authentication and authorization.
+- Adding automated tests for database operations.
+
+## 11. Conclusion
+
+The existing Todo REST API was successfully refactored to improve its structure and testability without rewriting its core functionality.
+
+A total of 24 unit tests and 20 integration tests were implemented, and all 44 automated tests passed successfully.
+
+The assignment provided practical experience in refactoring, automated testing, dependency injection, HTTP error handling, and modular backend application development.

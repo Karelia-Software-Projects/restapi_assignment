@@ -1,8 +1,18 @@
+### Invalid Todo state
+POST http://localhost:3000/todos
+Content-Type: application/json
 
-### Test GET with an ID that does not exist
-GET http://localhost:3000/todos/999
+{
+    "title": "Study Express",
+    "state": "pending"
+}
 
-### Test GET with another invalid ID
-GET http://localhost:3000/todos/1025
 
+### Malformed JSON request
+POST http://localhost:3000/todos
+Content-Type: application/json
 
+{
+    "title": "Study Node.js",
+    "state": "todo",
+}
