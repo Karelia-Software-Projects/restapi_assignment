@@ -486,7 +486,7 @@ A total of 24 unit tests were executed successfully, covering validation, Todo c
 
 **Results: 24 passed, 0 failed.**
 
-![Unit Test Results](docs/unit-test-results.png)
+![Unit Test Results](docs/unit_test_results.png)
 
 ### Integration Testing Results
 
@@ -494,7 +494,7 @@ A total of 20 integration tests were executed successfully using Supertest. The 
 
 **Results: 20 passed, 0 failed.**
 
-![Integration Test Results](docs/integration-test-results.png)
+![Integration Test Results](docs/integration_test_results.png)
 
 These results confirm that all implemented test cases passed, including successful CRUD operations, input validation, error handling, and test data isolation.
 
