@@ -325,6 +325,7 @@ This presented several limitations:
 
 ## New Project Structure
 
+```text
 restapi_assignment/
 │
 ├── src/
@@ -352,6 +353,7 @@ restapi_assignment/
 ├── package-lock.json
 ├── .gitignore
 └── README.md
+```
 
 To address these limitations, the application was divided into separate modules.
 
