@@ -17,9 +17,12 @@ function createTodoRouter(todoService) {
   });
 
   // GET /todos - Retrieve all or filter by state
+  // Supports both JSON and CSV response formats
   router.get("/", (req, res) => {
+    // Read the state query parameter
     const state = req.query.state;
 
+    // Validate the requested state
     if (
       state !== undefined &&
       (typeof state !== "string" || !todoService.allowedStates.includes(state))
@@ -29,9 +32,36 @@ function createTodoRouter(todoService) {
       });
     }
 
+    // Retrieve all Todos or filter by state
     const todos = todoService.getAllTodos(state);
 
-    res.status(200).json(todos);
+    // Tell clients that the response depends on Accept
+    res.vary("Accept");
+
+    // Use JSON if no specific format is requested
+    const acceptHeader = req.get("Accept");
+
+    const format =
+      !acceptHeader || acceptHeader.trim() === "*/*"
+        ? "application/json"
+        : req.accepts(["application/json", "text/csv"]);
+
+    // Return 406 if the requested format is unsupported
+    if (!format) {
+      return res.status(406).json({
+        error: "Not Acceptable",
+      });
+    }
+
+    // Return CSV if requested
+    if (format === "text/csv") {
+      const csv = todoService.toCsv(todos);
+
+      return res.status(200).type("text/csv").send(csv);
+    }
+
+    // Otherwise return JSON
+    return res.status(200).json(todos);
   });
 
   // GET /todos/:id - Retrieve a single Todo

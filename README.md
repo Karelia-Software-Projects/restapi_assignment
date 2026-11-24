@@ -564,3 +564,154 @@ The existing Todo REST API was successfully refactored to improve its structure 
 A total of 24 unit tests and 20 integration tests were implemented, and all 44 automated tests passed successfully.
 
 The assignment provided practical experience in refactoring, automated testing, dependency injection, HTTP error handling, and modular backend application development.
+
+---
+
+# Assignment 6: OpenAPI Documentation and CSV Support
+
+## 1. Assignment Overview
+
+The objective of Assignment 6 was to extend the existing Todo REST API by implementing OpenAPI documentation and adding support for CSV responses.
+
+The application was developed in Assignments 4 and 5 using Node.js and Express. The existing CRUD operations and modular application structure were preserved.
+
+Two main improvements were implemented:
+
+1. Interactive OpenAPI documentation using Swagger UI.
+2. Support for JSON and CSV response formats in the `GET /todos` endpoint.
+
+## 2. Technologies Used
+
+The following packages were added:
+
+- **swagger-ui-express:** Provides an interactive web interface for API documentation.
+- **yaml:** Parses the OpenAPI specification written in YAML.
+
+The OpenAPI specification uses version **3.0.3**.
+
+## 3. OpenAPI Documentation
+
+The API documentation was implemented using Swagger UI and is accessible locally at:
+
+**http://localhost:3000/doc**
+
+The OpenAPI specification is stored in:
+
+`src/docs/openapi.yaml`
+
+The specification defines the API endpoints, HTTP methods, request parameters, request bodies, response formats, status codes, and Todo data schemas.
+
+### Documented API Endpoints
+
+| Method | Endpoint      | Description                           |
+| ------ | ------------- | ------------------------------------- |
+| GET    | `/`           | Check server status                   |
+| POST   | `/todos`      | Create a new Todo                     |
+| GET    | `/todos`      | Retrieve all Todos or filter by state |
+| GET    | `/todos/{id}` | Retrieve a Todo by ID                 |
+| PUT    | `/todos/{id}` | Update an existing Todo               |
+| DELETE | `/todos/{id}` | Delete a Todo                         |
+
+Swagger UI allows API requests to be executed directly from the documentation page using the **Try it out** feature.
+
+No authentication is required for this assignment.
+
+## 4. CSV Response Support
+
+The `GET /todos` endpoint was modified to support both JSON and CSV responses.
+
+The server determines the response format using the HTTP `Accept` request header.
+
+### JSON Response
+
+Request:
+
+```http
+GET http://localhost:3000/todos
+Accept: application/json
+```
+
+The server returns a JSON array of Todo items.
+
+### CSV Response
+
+Request:
+
+```http
+GET http://localhost:3000/todos
+Accept: text/csv
+```
+
+Example CSV response:
+
+```csv
+id,title,description,state,dueDate,createdAt,updatedAt
+123,Complete Assignment 6,Test CSV response,done,,2026-11-24T22:05:09.546Z,2026-11-24T22:05:09.546Z
+```
+
+The CSV output includes the following fields:
+
+`id`, `title`, `description`, `state`, `dueDate`, `createdAt`, and `updatedAt`.
+
+### State Filtering with CSV
+
+The existing state filter is also supported when requesting CSV data.
+
+Example:
+
+```http
+GET http://localhost:3000/todos?state=done
+Accept: text/csv
+```
+
+The response contains only Todo items with the state `done`.
+
+## 5. Implementation Details
+
+### CSV Conversion
+
+Two functions were added to `src/services/todoService.js`:
+
+- `escapeCsv()`: Handles CSV values containing commas, quotation marks, and newline characters.
+- `toCsv()`: Converts an array of Todo objects into CSV format.
+
+### HTTP Content Negotiation
+
+The `GET /todos` route in `src/routes/todo.js` was modified to examine the client's `Accept` header.
+
+The endpoint supports:
+
+| Accept Header           | Response           |
+| ----------------------- | ------------------ |
+| `application/json`      | JSON               |
+| `text/csv`              | CSV                |
+| Missing header or `*/*` | JSON               |
+| Unsupported media type  | 406 Not Acceptable |
+
+The server sets the appropriate `Content-Type` response header based on the selected format.
+
+## 6. OpenAPI Specification Updates
+
+The OpenAPI specification defines both `application/json` and `text/csv` as supported response formats for `GET /todos`.
+
+This allows API users to select the required response format through Swagger UI.
+
+## 7. Verification
+
+The OpenAPI documentation was checked through the browser at `http://localhost:3000/doc`.
+
+The GET and POST endpoints were successfully executed through Swagger UI.
+
+CSV functionality was verified using VS Code REST Client.
+
+The CSV response returned HTTP `200 OK`, the `text/csv` content type, and Todo data in the expected column format.
+
+The state filter was also verified using a Todo item with the state `done`.
+
+## 8. Conclusion
+
+Assignment 6 extended the Todo REST API with interactive API documentation and support for CSV responses.
+
+The existing CRUD functionality was preserved, while the `GET /todos` endpoint was extended to return data in the format requested by the client.
+
+The application now provides OpenAPI documentation and supports both JSON and CSV representations of Todo data.

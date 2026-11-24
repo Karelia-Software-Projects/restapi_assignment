@@ -34,3 +34,31 @@ DELETE {{baseUrl}}/todos/{{createTodo.response.body.$.id}}
 
 ### 7. Verify that the Todo was deleted
 GET {{baseUrl}}/todos/{{createTodo.response.body.$.id}}
+
+
+### Create a completed Todo
+POST http://localhost:3000/todos
+Content-Type: application/json
+
+{
+    "title": "Complete Assignment 6",
+    "description": "Test CSV response",
+    "state": "done"
+}
+
+
+### GET all Todos in JSON format
+GET http://localhost:3000/todos
+Accept: application/json
+
+### GET all Todos in CSV format
+GET http://localhost:3000/todos
+Accept: text/csv
+
+### GET Todos with state done in CSV format
+GET http://localhost:3000/todos?state=done
+Accept: text/csv
+
+### GET Todos with unsupported response format
+GET http://localhost:3000/todos
+Accept: application/xml

@@ -1,0 +1,359 @@
+
+
+openapi: 3.0.3
+
+info:
+  title: Todo REST API Architecture
+  version: 1.0.0
+  description: |
+    RESTful Todo API developed using Node.js and Express.
+
+    Supports CRUD operations, Todo state filtering,
+    input validation, and JSON/CSV responses.
+
+    Developed for Assignments 4, 5 and 6.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Todos
+    description: Operations for managing Todo items
+
+  - name: General
+    description: Server information
+
+paths:
+
+  /:
+    get:
+      tags:
+        - General
+      summary: Check server status
+      operationId: getServerStatus
+      responses:
+        "200":
+          description: Server is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: Todo REST API is running
+
+  /todos:
+    get:
+      tags:
+        - Todos
+      summary: Get all Todos
+      description: |
+        Retrieve all Todo items or filter them by state.
+
+        Supports JSON and CSV responses using the
+        Accept request header.
+      operationId: getTodos
+
+      parameters:
+        - name: state
+          in: query
+          required: false
+          description: Filter Todo items by state
+          schema:
+            type: string
+            enum:
+              - todo
+              - doing
+              - done
+
+      responses:
+        "200":
+          description: Todo items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TodoItem"
+
+            text/csv:
+              schema:
+                type: string
+              example: |
+                id,title,description,state,dueDate,createdAt,updatedAt
+                123,Study REST APIs,Learn Express,doing,,2026-11-24T10:00:00.000Z,2026-11-24T10:00:00.000Z
+
+        "400":
+          description: Invalid state filter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Invalid state filter
+
+        "406":
+          description: Requested response format is not supported
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not Acceptable
+
+    post:
+      tags:
+        - Todos
+      summary: Create a new Todo
+      operationId: createTodo
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoInput"
+            example:
+              title: Study REST APIs
+              description: Complete the assignment
+              state: todo
+              dueDate: "2026-12-10"
+
+      responses:
+        "201":
+          description: Todo created successfully
+          headers:
+            Location:
+              description: URL of the created Todo
+              schema:
+                type: string
+                example: /todos/123
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodoItem"
+
+        "400":
+          description: Invalid Todo data or malformed JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Invalid state
+
+  /todos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique UUID of the Todo item
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags:
+        - Todos
+      summary: Get a Todo by ID
+      operationId: getTodoById
+
+      responses:
+        "200":
+          description: Todo retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodoItem"
+
+        "404":
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Todo not found
+
+    put:
+      tags:
+        - Todos
+      summary: Update an existing Todo
+      description: |
+        Update one or more fields of an existing Todo.
+        The original ID and createdAt are preserved.
+      operationId: updateTodo
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoUpdate"
+            example:
+              state: doing
+
+      responses:
+        "200":
+          description: Todo updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodoItem"
+
+        "400":
+          description: Invalid update data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Invalid state
+
+        "404":
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Todo not found
+
+    delete:
+      tags:
+        - Todos
+      summary: Delete a Todo
+      operationId: deleteTodo
+
+      responses:
+        "204":
+          description: Todo deleted successfully. No response body.
+
+        "404":
+          description: Todo not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Todo not found
+
+components:
+  schemas:
+
+    TodoItem:
+      type: object
+      description: Complete Todo item returned by the API
+      required:
+        - id
+        - title
+        - description
+        - state
+        - dueDate
+        - createdAt
+        - updatedAt
+
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+
+        title:
+          type: string
+          minLength: 1
+          example: Study REST APIs
+
+        description:
+          type: string
+          example: Learn Node.js and Express
+
+        state:
+          type: string
+          enum:
+            - todo
+            - doing
+            - done
+          default: todo
+
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-12-10"
+
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    TodoInput:
+      type: object
+      required:
+        - title
+      additionalProperties: false
+
+      properties:
+        title:
+          type: string
+          minLength: 1
+
+        description:
+          type: string
+
+        state:
+          type: string
+          enum:
+            - todo
+            - doing
+            - done
+          default: todo
+
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+
+    TodoUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+
+      properties:
+        title:
+          type: string
+          minLength: 1
+
+        description:
+          type: string
+
+        state:
+          type: string
+          enum:
+            - todo
+            - doing
+            - done
+
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+
+    Error:
+      type: object
+      required:
+        - error
+
+      properties:
+        error:
+          type: string
+          example: Todo not found
+

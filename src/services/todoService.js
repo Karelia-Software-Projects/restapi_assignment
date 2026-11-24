@@ -127,6 +127,56 @@ function createTodoService() {
     return true;
   }
 
+  // Convert a single value into a CSV-safe field
+  function escapeCsv(value) {
+    // Convert null or undefined to an empty field
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    const text = String(value);
+
+    // Escape quotation marks by doubling them
+    const escaped = text.replace(/"/g, '""');
+
+    // Quote fields containing commas, quotes or newlines
+    if (/[",\r\n]/.test(text)) {
+      return `"${escaped}"`;
+    }
+
+    return escaped;
+  }
+
+  // Convert an array of Todo items into CSV
+  function toCsv(items) {
+    const headers = [
+      "id",
+      "title",
+      "description",
+      "state",
+      "dueDate",
+      "createdAt",
+      "updatedAt",
+    ];
+
+    // Convert Todo objects into CSV rows
+    const rows = items.map((todo) => [
+      todo.id,
+      todo.title,
+      todo.description,
+      todo.state,
+      todo.dueDate,
+      todo.createdAt,
+      todo.updatedAt,
+    ]);
+
+    // Add headers as the first row
+    const allRows = [headers, ...rows];
+
+    // Escape each value and join fields with commas
+    return allRows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+  }
+
   return {
     validateTodo,
     createTodo,
@@ -134,6 +184,7 @@ function createTodoService() {
     getTodoById,
     updateTodo,
     deleteTodo,
+    toCsv,
     allowedStates,
   };
 }
