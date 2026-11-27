@@ -4,30 +4,40 @@ openapi: 3.0.3
 
 info:
   title: Todo REST API Architecture
-  version: 1.0.0
+  version: 1.1.0
   description: |
     RESTful Todo API developed using Node.js and Express.
 
     Supports CRUD operations, Todo state filtering,
     input validation, and JSON/CSV responses.
 
-    Developed for Assignments 4, 5 and 6.
+    JWT access-token authentication (15 minutes),
+    refresh-token authentication (7 days),
+    HTTP-only cookies, logout and API rate limiting.
+
+    Developed for Assignments 4, 5, 6 and 7.
 
 servers:
   - url: http://localhost:3000
     description: Local development server
 
 tags:
+  - name: Authentication
+    description: Login, refresh and logout operations
+
   - name: Todos
     description: Operations for managing Todo items
 
   - name: General
     description: Server information
 
-paths:
+security:
+  - bearerAuth: []
 
+paths:
   /:
     get:
+      security: []
       tags:
         - General
       summary: Check server status
@@ -44,6 +54,104 @@ paths:
                     type: string
               example:
                 message: Todo REST API is running
+                
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: Login and obtain JWT tokens
+      operationId: login
+      security: []
+      description: |
+        Authenticate using the configured username and password.
+
+        Returns a 15-minute access JWT in the JSON response.
+        Stores a 7-day refresh JWT in an HTTP-only cookie.
+
+        Rate limit: 5 requests per 15 minutes per IP.
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+            example:
+              username: student1
+              password: YOUR_TEST_PASSWORD
+
+      responses:
+        "200":
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: |
+                Sets refreshToken as an HTTP-only cookie
+                with a seven-day lifetime.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Obtain a new access token
+      operationId: refreshAccessToken
+      security:
+        - refreshCookie: []
+      description: |
+        Uses the valid refreshToken HTTP-only cookie
+        to obtain a new 15-minute access JWT.
+
+      responses:
+        "200":
+          description: New access token generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout and invalidate refresh token
+      operationId: logout
+      security: []
+      description: |
+        Invalidates the refresh token when present
+        and clears the refreshToken cookie.
+
+      responses:
+        "204":
+          description: Logout completed. No response body.
+          headers:
+            Set-Cookie:
+              description: Clears the refreshToken cookie.
+              schema:
+                type: string
 
   /todos:
     get:
@@ -104,6 +212,13 @@ paths:
               example:
                 error: Not Acceptable
 
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+
     post:
       tags:
         - Todos
@@ -145,6 +260,14 @@ paths:
               example:
                 error: Invalid state
 
+        
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+
   /todos/{id}:
     parameters:
       - name: id
@@ -177,6 +300,13 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Todo not found
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
 
     put:
       tags:
@@ -222,6 +352,13 @@ paths:
               example:
                 error: Todo not found
 
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+
     delete:
       tags:
         - Todos
@@ -241,7 +378,32 @@ paths:
               example:
                 error: Todo not found
 
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Enter the access JWT returned by POST /login.
+        Access tokens expire after 15 minutes.
+
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+      description: |
+        HTTP-only refresh-token cookie set by POST /login.
+        The browser sends the cookie automatically.
+        Refresh tokens expire after 7 days.
+  
   schemas:
 
     TodoItem:
@@ -356,4 +518,41 @@ components:
         error:
           type: string
           example: Todo not found
+
+    TokenResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+      properties:
+        accessToken:
+          type: string
+          description: Signed JWT access token
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: Access-token lifetime in seconds
+          example: 900
+
+  responses:
+    Unauthorized:
+      description: Authentication failed or access token missing
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Invalid or expired access token
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: Too many API requests. Please try again later.
 

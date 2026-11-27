@@ -1,3 +1,8 @@
+const cookieParser = require("cookie-parser");
+const authRouter = require("./routes/auth");
+const verifyToken = require("./middleware/verifyToken");
+const { apiLimiter, loginLimiter } = require("./middleware/rate-limiters");
+
 const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const YAML = require("yaml");
@@ -23,6 +28,8 @@ function createApp() {
 
   // Middleware to parse JSON
   app.use(express.json());
+  // Parse cookies
+  app.use(cookieParser());
 
   // Root endpoint
   app.get("/", (req, res) => {
@@ -35,7 +42,10 @@ function createApp() {
   app.use("/doc", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
   // Todo API routes
-  app.use("/todos", createTodoRouter(todoService));
+  // Public authentication endpoints
+  app.use("/login", loginLimiter);
+  app.use("/", authRouter);
+  app.use("/todos", apiLimiter, verifyToken, createTodoRouter(todoService));
 
   // Handle malformed JSON
   app.use((err, req, res, next) => {

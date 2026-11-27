@@ -1,8 +1,11 @@
+const authService = require("../src/services/auth");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const request = require("supertest");
 
 const createApp = require("../src/app");
+
+const accessToken = authService.createAccessToken(process.env.AUTH_USERNAME);
 
 // ========================================
 // 1. ROOT ENDPOINT
@@ -11,6 +14,7 @@ const createApp = require("../src/app");
 test("GET / returns 200 server status", async () => {
   const app = createApp();
 
+  // Root endpoint is public
   const res = await request(app).get("/");
 
   assert.equal(res.status, 200);
@@ -24,32 +28,36 @@ test("GET / returns 200 server status", async () => {
 test("POST /todos creates a Todo, returns 201", async () => {
   const app = createApp();
 
-  const res = await request(app).post("/todos").send({
-    title: "Study Node.js",
-    description: "Learn Express",
-    state: "todo",
-  });
+  const res = await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      title: "Study Node.js",
+      description: "Learn Express",
+      state: "todo",
+    });
 
   assert.equal(res.status, 201);
   assert.equal(res.body.title, "Study Node.js");
   assert.equal(res.body.description, "Learn Express");
   assert.equal(res.body.state, "todo");
 
-  // Check generated fields
   assert.ok(res.body.id);
   assert.ok(res.body.createdAt);
   assert.ok(res.body.updatedAt);
 
-  // Check response header
   assert.equal(res.headers.location, `/todos/${res.body.id}`);
 });
 
 test("POST uses default values, returns 201", async () => {
   const app = createApp();
 
-  const res = await request(app).post("/todos").send({
-    title: "Complete assignment",
-  });
+  const res = await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      title: "Complete assignment",
+    });
 
   assert.equal(res.status, 201);
   assert.equal(res.body.state, "todo");
@@ -60,9 +68,12 @@ test("POST uses default values, returns 201", async () => {
 test("POST rejects a missing title, returns 400", async () => {
   const app = createApp();
 
-  const res = await request(app).post("/todos").send({
-    state: "todo",
-  });
+  const res = await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      state: "todo",
+    });
 
   assert.equal(res.status, 400);
   assert.equal(res.body.error, "Title is required");
@@ -71,10 +82,13 @@ test("POST rejects a missing title, returns 400", async () => {
 test("POST rejects an invalid state, returns 400", async () => {
   const app = createApp();
 
-  const res = await request(app).post("/todos").send({
-    title: "Study Express",
-    state: "pending",
-  });
+  const res = await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      title: "Study Express",
+      state: "pending",
+    });
 
   assert.equal(res.status, 400);
   assert.equal(res.body.error, "Invalid state");
@@ -83,9 +97,12 @@ test("POST rejects an invalid state, returns 400", async () => {
 test("POST rejects a non-string title, returns 400", async () => {
   const app = createApp();
 
-  const res = await request(app).post("/todos").send({
-    title: 123,
-  });
+  const res = await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      title: 123,
+    });
 
   assert.equal(res.status, 400);
   assert.equal(res.body.error, "Title must be a non-empty string");
@@ -96,6 +113,7 @@ test("POST rejects malformed JSON, returns 400", async () => {
 
   const res = await request(app)
     .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
     .set("Content-Type", "application/json")
     .send('{"title":"Study","state":"todo",}');
 
@@ -110,7 +128,9 @@ test("POST rejects malformed JSON, returns 400", async () => {
 test("GET /todos returns an empty array, returns 200", async () => {
   const app = createApp();
 
-  const res = await request(app).get("/todos");
+  const res = await request(app)
+    .get("/todos")
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(res.status, 200);
   assert.deepEqual(res.body, []);
@@ -119,11 +139,19 @@ test("GET /todos returns an empty array, returns 200", async () => {
 test("GET /todos returns all created Todos, returns 200", async () => {
   const app = createApp();
 
-  await request(app).post("/todos").send({ title: "Task A" });
+  await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({ title: "Task A" });
 
-  await request(app).post("/todos").send({ title: "Task B" });
+  await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({ title: "Task B" });
 
-  const res = await request(app).get("/todos");
+  const res = await request(app)
+    .get("/todos")
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(res.status, 200);
   assert.equal(res.body.length, 2);
@@ -134,11 +162,19 @@ test("GET /todos returns all created Todos, returns 200", async () => {
 test("GET /todos filters by state, returns 200", async () => {
   const app = createApp();
 
-  await request(app).post("/todos").send({ title: "Task A", state: "todo" });
+  await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({ title: "Task A", state: "todo" });
 
-  await request(app).post("/todos").send({ title: "Task B", state: "doing" });
+  await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({ title: "Task B", state: "doing" });
 
-  const res = await request(app).get("/todos?state=doing");
+  const res = await request(app)
+    .get("/todos?state=doing")
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(res.status, 200);
   assert.equal(res.body.length, 1);
@@ -149,7 +185,9 @@ test("GET /todos filters by state, returns 200", async () => {
 test("GET /todos rejects invalid state filter, returns 400", async () => {
   const app = createApp();
 
-  const res = await request(app).get("/todos?state=pending");
+  const res = await request(app)
+    .get("/todos?state=pending")
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(res.status, 400);
   assert.equal(res.body.error, "Invalid state filter");
@@ -164,9 +202,12 @@ test("GET /todos/:id returns matching Todo, returns 200", async () => {
 
   const created = await request(app)
     .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
     .send({ title: "Learn REST APIs" });
 
-  const res = await request(app).get(`/todos/${created.body.id}`);
+  const res = await request(app)
+    .get(`/todos/${created.body.id}`)
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(res.status, 200);
   assert.equal(res.body.id, created.body.id);
@@ -176,7 +217,9 @@ test("GET /todos/:id returns matching Todo, returns 200", async () => {
 test("GET /todos/:id returns 404 for missing ID", async () => {
   const app = createApp();
 
-  const res = await request(app).get("/todos/nonexistent-id");
+  const res = await request(app)
+    .get("/todos/nonexistent-id")
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(res.status, 404);
   assert.equal(res.body.error, "Todo not found");
@@ -189,25 +232,31 @@ test("GET /todos/:id returns 404 for missing ID", async () => {
 test("PUT updates Todo state, returns 200", async () => {
   const app = createApp();
 
-  const created = await request(app).post("/todos").send({
-    title: "Study Express",
-    state: "todo",
-  });
+  const created = await request(app)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      title: "Study Express",
+      state: "todo",
+    });
 
-  const res = await request(app).put(`/todos/${created.body.id}`).send({
-    state: "doing",
-  });
+  const res = await request(app)
+    .put(`/todos/${created.body.id}`)
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      state: "doing",
+    });
 
   assert.equal(res.status, 200);
   assert.equal(res.body.state, "doing");
   assert.equal(res.body.title, "Study Express");
   assert.equal(res.body.id, created.body.id);
 
-  // Original creation timestamp is preserved
   assert.equal(res.body.createdAt, created.body.createdAt);
 
-  // Confirm the update was saved
-  const verified = await request(app).get(`/todos/${created.body.id}`);
+  const verified = await request(app)
+    .get(`/todos/${created.body.id}`)
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(verified.body.state, "doing");
 });
@@ -217,13 +266,17 @@ test("PUT updates multiple Todo fields, returns 200", async () => {
 
   const created = await request(app)
     .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
     .send({ title: "Original Title" });
 
-  const res = await request(app).put(`/todos/${created.body.id}`).send({
-    title: "Updated Title",
-    description: "Updated description",
-    state: "done",
-  });
+  const res = await request(app)
+    .put(`/todos/${created.body.id}`)
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({
+      title: "Updated Title",
+      description: "Updated description",
+      state: "done",
+    });
 
   assert.equal(res.status, 200);
   assert.equal(res.body.title, "Updated Title");
@@ -237,17 +290,20 @@ test("PUT rejects an invalid state, returns 400", async () => {
 
   const created = await request(app)
     .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
     .send({ title: "Test Task" });
 
   const res = await request(app)
     .put(`/todos/${created.body.id}`)
+    .set("Authorization", `Bearer ${accessToken}`)
     .send({ state: "cancelled" });
 
   assert.equal(res.status, 400);
   assert.equal(res.body.error, "Invalid state");
 
-  // Invalid update must not change stored data
-  const verified = await request(app).get(`/todos/${created.body.id}`);
+  const verified = await request(app)
+    .get(`/todos/${created.body.id}`)
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(verified.body.state, "todo");
 });
@@ -257,6 +313,7 @@ test("PUT returns 404 for missing Todo", async () => {
 
   const res = await request(app)
     .put("/todos/nonexistent-id")
+    .set("Authorization", `Bearer ${accessToken}`)
     .send({ state: "doing" });
 
   assert.equal(res.status, 404);
@@ -272,15 +329,19 @@ test("DELETE successfully removes a Todo and verifies its absence (204/404)", as
 
   const created = await request(app)
     .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
     .send({ title: "Temporary Task" });
 
-  const deleted = await request(app).delete(`/todos/${created.body.id}`);
+  const deleted = await request(app)
+    .delete(`/todos/${created.body.id}`)
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(deleted.status, 204);
   assert.equal(deleted.text, "");
 
-  // Verify the Todo no longer exists
-  const res = await request(app).get(`/todos/${created.body.id}`);
+  const res = await request(app)
+    .get(`/todos/${created.body.id}`)
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(res.status, 404);
 });
@@ -288,7 +349,9 @@ test("DELETE successfully removes a Todo and verifies its absence (204/404)", as
 test("DELETE returns 404 for missing Todo", async () => {
   const app = createApp();
 
-  const res = await request(app).delete("/todos/nonexistent-id");
+  const res = await request(app)
+    .delete("/todos/nonexistent-id")
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(res.status, 404);
   assert.equal(res.body.error, "Todo not found");
@@ -302,10 +365,18 @@ test("Separate app instances have independent data", async () => {
   const appA = createApp();
   const appB = createApp();
 
-  await request(appA).post("/todos").send({ title: "Only in app A" });
+  await request(appA)
+    .post("/todos")
+    .set("Authorization", `Bearer ${accessToken}`)
+    .send({ title: "Only in app A" });
 
-  const resA = await request(appA).get("/todos");
-  const resB = await request(appB).get("/todos");
+  const resA = await request(appA)
+    .get("/todos")
+    .set("Authorization", `Bearer ${accessToken}`);
+
+  const resB = await request(appB)
+    .get("/todos")
+    .set("Authorization", `Bearer ${accessToken}`);
 
   assert.equal(resA.body.length, 1);
   assert.equal(resB.body.length, 0);
