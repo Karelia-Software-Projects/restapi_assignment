@@ -716,95 +716,139 @@ The existing CRUD functionality was preserved, while the `GET /todos` endpoint w
 
 The application now provides OpenAPI documentation and supports both JSON and CSV representations of Todo data.
 
-Assignment 7: JWT Authentication with Access and Refresh Tokens
+# Assignment 7: JWT Authentication with Access and Refresh Tokens
 
-1. Assignment Overview
-   This assignment extends the Todo REST API from Assignments 4, 5, and 6 with JWT-based authentication, access and refresh tokens, logout, and API rate limiting. The existing Todo CRUD endpoints, state filtering, JSON/CSV responses, and Swagger documentation remain available.
-2. Authentication Features
+## 1. Assignment Overview
 
-- Access tokens: Signed JWTs valid for 15 minutes. Clients send them as Authorization: Bearer <access-token> when calling protected Todo endpoints.
-- Refresh tokens: Signed JWTs valid for 7 days. The login endpoint sets a refreshToken HTTP-only cookie instead of including the refresh token in the JSON response.
-- Refresh endpoint: A valid, active refresh cookie can be used to obtain a new access token.
-- Logout: The logout endpoint removes the refresh token's active record and clears the refresh cookie. Previously issued access tokens can remain valid until they expire.
-- Token storage: Active refresh tokens are tracked by SHA-256 hashes in an in-memory Map to support invalidation on logout.
-- Test user: For this coursework application, login credentials are configured through environment variables. User registration and a persistent user database are not implemented.
-  Authentication endpoints
-  Method Endpoint Purpose Successful status
-  GET / Public server-status endpoint 200
-  POST /login Validate credentials; return an access token and set the refresh-token cookie 200
-  POST /refresh Issue a new access token using a valid refresh-token cookie 200
-  POST /logout Invalidate the stored refresh token and clear its cookie 204
-  GET, POST /todos Retrieve/create Todos (requires access JWT) 200 / 201
-  GET, PUT, DELETE /todos/:id Retrieve/update/delete an individual Todo (requires access JWT) 200 / 204
+This assignment extends the Todo REST API from Assignments 4, 5, and 6 with JWT-based authentication, access and refresh tokens, logout, and API rate limiting. The existing Todo CRUD endpoints, state filtering, JSON/CSV responses, and Swagger documentation remain available.
 
-Swagger UI is available locally at http://localhost:3000/doc. It documents the bearerAuth security scheme, the refresh cookie, and the HTTP responses. The Todo endpoints retain the application/json and text/csv response formats for GET /todos. 3. Rate Limiting
+## 2. Authentication Features
+
+- **Access tokens:** Signed JWTs valid for 15 minutes. Clients send them as `Authorization: Bearer <access-token>` when calling protected Todo endpoints.
+- **Refresh tokens:** Signed JWTs valid for 7 days. The login endpoint sets a `refreshToken` HTTP-only cookie instead of including the refresh token in the JSON response.
+- **Refresh endpoint:** A valid, active refresh cookie can be used to obtain a new access token.
+- **Logout:** The logout endpoint removes the refresh token's active record and clears the refresh cookie. Previously issued access tokens can remain valid until they expire.
+- **Token storage:** Active refresh tokens are tracked by SHA-256 hashes in an in-memory `Map` to support invalidation on logout.
+- **Test user:** For this coursework application, login credentials are configured through environment variables. User registration and a persistent user database are not implemented.
+
+### Authentication endpoints
+
+| Method | Endpoint | Purpose | Successful status |
+| --- | --- | --- | --- |
+| `GET` | `/` | Public server-status endpoint | `200` |
+| `POST` | `/login` | Validate credentials; return an access token and set the refresh-token cookie | `200` |
+| `POST` | `/refresh` | Issue a new access token using a valid refresh-token cookie | `200` |
+| `POST` | `/logout` | Invalidate the stored refresh token and clear its cookie | `204` |
+| `GET`, `POST` | `/todos` | Retrieve/create Todos (requires access JWT) | `200` / `201` |
+| `GET`, `PUT`, `DELETE` | `/todos/:id` | Retrieve/update/delete an individual Todo (requires access JWT) | `200` / `204` |
+
+Swagger UI is available locally at `http://localhost:3000/doc`. It documents the `bearerAuth` security scheme, the refresh cookie, and the HTTP responses. The Todo endpoints retain the `application/json` and `text/csv` response formats for `GET /todos`.
+
+## 3. Rate Limiting
+
 Rate limits are applied per client IP address:
-Endpoint group Limit Period When exceeded
-/login 5 requests 15 minutes 429 Too Many Requests
-/todos and /todos/:id 100 requests 15 minutes 429 Too Many Requests
 
-The limits use express-rate-limit and in-memory counters. Unsuccessful login attempts are counted. The limits reset when the development server restarts. 4. Updated Project Modules
-File Responsibility
-src/databases/auth.js Store, retrieve, and invalidate refresh-token records
-src/services/auth.js Authenticate the test user, issue JWTs, verify tokens, refresh access tokens, and log out
-src/routes/auth.js Define /login, /refresh, and /logout, including refresh-token cookies
-src/middleware/verifyToken.js Validate the Bearer access token before Todo requests
-src/middleware/rate-limiters.js Configure login and Todo request limits
-src/app.js Register authentication routes, cookie middleware, JWT verification, rate limiting, and existing routes
-src/docs/openapi.yaml Document authentication, rate limiting, and existing Todo operations
-tests/todo.integration.test.js Preserve existing Todo integration checks using valid access tokens
+| Endpoint group | Limit | Period | When exceeded |
+| --- | --- | --- | --- |
+| `/login` | 5 requests | 15 minutes | `429 Too Many Requests` |
+| `/todos` and `/todos/:id` | 100 requests | 15 minutes | `429 Too Many Requests` |
 
-5. Installation and Environment Configuration
-   This project uses Node.js, Express, jsonwebtoken, cookie-parser, express-rate-limit, and the previously installed Swagger/OpenAPI dependencies.
-   npm install
-   Create a .env file in the project root (next to package.json) with the following variable names. Replace all placeholder values with your own local configuration:
-   PORT=3000
-   JWT_ACCESS_SECRET=<unique-random-secret>
-   JWT_REFRESH_SECRET=<different-unique-random-secret>
-   ACCESS_TOKEN_EXPIRY=15m
-   REFRESH_TOKEN_EXPIRY=7d
-   AUTH_USERNAME=<test-username>
-   AUTH_PASSWORD=<local-test-password>
-   Generate two different secrets using:
-   node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
-   Run the command twice and use a different generated value for each signing secret. Never commit .env or publish actual secrets or passwords.
+The limits use `express-rate-limit` and in-memory counters. Unsuccessful login attempts are counted. The limits reset when the development server restarts.
+
+## 4. Updated Project Modules
+
+| File | Responsibility |
+| --- | --- |
+| `src/databases/auth.js` | Store, retrieve, and invalidate refresh-token records |
+| `src/services/auth.js` | Authenticate the test user, issue JWTs, verify tokens, refresh access tokens, and log out |
+| `src/routes/auth.js` | Define `/login`, `/refresh`, and `/logout`, including refresh-token cookies |
+| `src/middleware/verifyToken.js` | Validate the Bearer access token before Todo requests |
+| `src/middleware/rate-limiters.js` | Configure login and Todo request limits |
+| `src/app.js` | Register authentication routes, cookie middleware, JWT verification, rate limiting, and existing routes |
+| `src/docs/openapi.yaml` | Document authentication, rate limiting, and existing Todo operations |
+| `tests/todo.integration.test.js` | Preserve existing Todo integration checks using valid access tokens |
+
+## 5. Installation and Environment Configuration
+
+This project uses Node.js, Express, `jsonwebtoken`, `cookie-parser`, `express-rate-limit`, and the previously installed Swagger/OpenAPI dependencies.
+
+```bash
+npm install
+```
+
+Create a `.env` file in the project root (next to `package.json`) with the following variable names. Replace all placeholder values with your own local configuration:
+
+```dotenv
+PORT=3000
+JWT_ACCESS_SECRET=<unique-random-secret>
+JWT_REFRESH_SECRET=<different-unique-random-secret>
+ACCESS_TOKEN_EXPIRY=15m
+REFRESH_TOKEN_EXPIRY=7d
+AUTH_USERNAME=<test-username>
+AUTH_PASSWORD=<local-test-password>
+```
+
+Generate two different secrets using:
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+Run the command twice and use a different generated value for each signing secret. Never commit `.env` or publish actual secrets or passwords.
 
 Start the server with the configured npm script:
+
+```bash
 npm start
+```
 
-The start script loads .env with Node.js's --env-file=.env option. The API is then available at http://localhost:3000, with Swagger UI at http://localhost:3000/doc.
+The start script loads `.env` with Node.js's `--env-file=.env` option. The API is then available at `http://localhost:3000`, with Swagger UI at `http://localhost:3000/doc`.
 
-6. Using the API
-1. Send POST /login with a JSON body containing the configured username and password.
-1. Copy the accessToken returned in the JSON response. The refresh token is set in an HTTP-only cookie.
-1. Send Todo requests with Authorization: Bearer <access-token>. In Swagger UI, use Authorize to enter the access token.
-1. After the access token expires, call POST /refresh with the refresh-token cookie to obtain a new access token.
-1. Call POST /logout to invalidate the refresh token and clear the cookie.
-   Example login JSON body:
-   {
-   "username": "<test-username>",
-   "password": "<local-test-password>"
-   }
-1. A protected Todo request without a valid access token returns 401 Unauthorized. Exceeding the configured request limit returns 429 Too Many Requests.
-1. Testing and Verification
-   The existing automated test suite was updated to include access-token authorization in Todo integration requests while retaining the original test cases and assertions.
-   npm test
-   Verified automated test result (27 November 2026): 44 tests executed, 44 passed, 0 failed. These tests cover the existing Todo service and CRUD/validation behavior; they do not include separate automated JWT or rate-limiting test cases.
+## 6. Using the API
+
+1. Send `POST /login` with a JSON body containing the configured `username` and `password`.
+2. Copy the `accessToken` returned in the JSON response. The refresh token is set in an HTTP-only cookie.
+3. Send Todo requests with `Authorization: Bearer <access-token>`. In Swagger UI, use **Authorize** to enter the access token.
+4. After the access token expires, call `POST /refresh` with the refresh-token cookie to obtain a new access token.
+5. Call `POST /logout` to invalidate the refresh token and clear the cookie.
+
+Example login JSON body:
+
+```json
+{
+  "username": "<test-username>",
+  "password": "<local-test-password>"
+}
+```
+
+A protected Todo request without a valid access token returns `401 Unauthorized`. Exceeding the configured request limit returns `429 Too Many Requests`.
+
+## 7. Testing and Verification
+
+The existing automated test suite was updated to include access-token authorization in Todo integration requests while retaining the original test cases and assertions.
+
+```bash
+npm test
+```
+
+**Verified automated test result (27 November 2026):** 44 tests executed, 44 passed, 0 failed. These tests cover the existing Todo service and CRUD/validation behavior; they do not include separate automated JWT or rate-limiting test cases.
 
 The following authentication behavior was checked manually during development:
 
-- GET /todos without an access token returned 401.
-- GET /todos with a valid access token returned 200.
-- Five invalid login attempts returned 401, followed by 429 on the sixth attempt within the same window.
-- The OpenAPI YAML parsed successfully and included /login, /refresh, /logout, bearerAuth, refreshCookie, and both JSON and CSV response media types.
-  Other authentication scenarios, including refresh after logout and the 100-request Todo API limit, should be verified before submission if they have not already been tested.
+- `GET /todos` without an access token returned `401`.
+- `GET /todos` with a valid access token returned `200`.
+- Five invalid login attempts returned `401`, followed by `429` on the sixth attempt within the same window.
+- The OpenAPI YAML parsed successfully and included `/login`, `/refresh`, `/logout`, `bearerAuth`, `refreshCookie`, and both JSON and CSV response media types.
 
-8. Implementation Notes and Limitations
+Other authentication scenarios, including refresh after logout and the 100-request Todo API limit, should be verified before submission if they have not already been tested.
+
+## 8. Implementation Notes and Limitations
 
 - Todo items, refresh-token records, and rate-limit counters use in-memory storage and are not persistent across server restarts.
 - Refresh tokens are invalidated on logout; access tokens remain usable until their own expiry unless additional access-token revocation is implemented.
 - The configured test account and in-memory storage are intended for coursework, not production user management.
-- The .env file is excluded from Git version control.
+- The `.env` file is excluded from Git version control.
 
-9. GitHub Repository
-   https://github.com/Karelia-Software-Projects/restapi_assignment
+## 9. GitHub Repository
+
+https://github.com/Karelia-Software-Projects/restapi_assignment
